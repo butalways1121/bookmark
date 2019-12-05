@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>个人书签</title>
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
+    <meta name="keywords" content="个人书签" />
+    <meta name="description" content="修改自http://ihutui.com" />
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-transform" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="stylesheet" href="css/css.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery-3.1.0.js"></script>
+    <script>
+        var titleTime;
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState == 'hidden') {
+                normal_title = document.title;
+                document.title = '(；′⌒`)网页崩溃啦';
+                clearTimeout(titleTime);
+            } else {
+                document.title = '(ง •̀_•́)ง咦又好了';
+                titleTime = setTimeout(function () {
+                    document.title = '个人书签';
+                }, 1000);
+            }
+        });
+    </script>
+</head>
+<!-- 去掉横向滚动条 -->
+<body style="overflow-x:hidden;">
+    <!-- 星空背景 -->
+    <canvas id="canvas" width="200" height="200" style=" z-index: -1;position:absolute;"></canvas>
+
+    <style>
+        /* 资源导航 */
+        #header {
+            /* background: #f7f7f7; */
+            padding: 5px;
+            color: #FFF;
+            /* border-bottom: 1px solid #f0f0f0; */
+            position: relative;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        #header>.logo {
+            font-size: 22px;
+            color: Coral;
+            line-height: 35px;
+            /* padding-left: 3%; */
+        }
+
+        #header>.bar {
+            float: right;
+            margin-left: 3px;
+            padding: 10px;
+
+        }
+
+        #header>.bar a {
+            color: #333
+        }
+
+        #header>.bar .searchbar .searchbar-cancel {
+            color: #333;
+            font-size: 0.8rem;
+            height: 35px;
+            line-height: 35px;
+        }
+
+        #header>.myico {
+            height: 35px;
+            line-height: 37px;
+            text-align: right;
+            font-size: 16px;
+            color: #333;
+            margin-left: 11px;
+            float: right;
+        }
+
+        /*首页-博客背景*/
+        #footer {
+            padding: 15px 0;
+            /*    background-color: #f0f0f0;*/
+            color: #888;
+            max-width: 960px;
+            /*    border-top: 1px solid #b7a8a8;*/
+            margin: 0px auto;
+            margin-top: 10px;
+            text-align: center;
+            border: 1px dotted SkyBlue;
+            border-radius: 6px 6px 6px 6px;
+        }
+
+        #footer a {
+            color: OrangeRed
+        }
+
+        .tt {
+            font-size: 20px;
+            color: #771a1a;
+            background: #e7e7e7 -webkit-gradient(linear, 0 0, 0 100%, from(#fff), to(#ebeff3));
+            background-size: cover;
+            border-bottom: 3px solid #771a1a;
+            border-top: 1px solid #dfdfdf;
+            line-height: 28px;
+            padding: 3px 0 3px 12px;
+        }
+
+        .list {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .list a {
+            width: 100%;
+            display: block;
+            float: left;
+            padding-left: 8px;
+            font: 16px/37px 微软雅黑;
+            background: url(/images/at.png) 97% 50% no-repeat;
+            border-bottom: 1px solid rgb(243, 243, 243);
+        }
+
+        .ranklist {
+            padding: 0px;
+            margin: 5px;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .ranklist li {
+            height: 25px;
+            margin: 5px 5px 0px 0px;
+            clear: both;
+            overflow: hidden;
+        }
+
+        .ranklist li a {
+            font-size: 14px;
+            display: inline-block;
+            float: left;
+            height: 20px;
+            margin-left: 5px;
+            padding: 0 5px;
+        }
+
+        .link {
+            margin-bottom: 5px;
+        }
+
+        .link a {
+            background: #FFF;
+            text-align: center;
+        }
+
+        .link a {
+            box-shadow: 1px 1px 1px #999;
+            width: 18.2%;
+            margin-left: 0.2%;
+            margin-top: 5px;
+            height: 35px;
+            display: inline-block;
+            text-align: center;
+            line-height: 35px;
+            overflow: hidden;
+            border: solid #B7B7B7 1px;
+            color: #03c;
+        }
+
+        .ss a {
+            font-weight: bold;
+            background: #DDD;
+        }
+    </style>
+
+    <!-- 左上角资源导航按钮 -->
+    <div id="header">
+        <a href="https://butalways1121.gitee.io/bookmark/" class="logo external" id="top">资源导航</a>
+    </div>
+
+    <!-- 中间正文内容的框架，包括搜索和内容 -->
+    <div class="container">
+
+        <style>
+            #nav-plane {
+                position: fixed;
+                top: 55px;
+                right: 50%;
+                margin-right: 490px;
+            }
+
+            /*侧栏的背景颜色*/
+            #nav-plane ul {
+                padding: 10px 0;
+                /*    background-color: rgba(10, 84, 128, 0.77);*/
+                border: 1px dotted LightSalmon;
+                border-radius: 6px;
+                z-index: 999;
+            }
+
+            #nav-plane li a {
+                display: inline-block;
+                text-align: center;
+                line-height: 40px;
+                width: 66px;
+                font-size: 18px;
+                color: DodgerBlue;
+                /*侧栏的字体颜色*/
+            }
+
+            .tip {
+                margin: 10px;
+                padding: 20px 15px;
+                border-radius: 6px;
+                color: blue;
+                background-color: rgba(78, 107, 145, 0.38);
+            }
+
+            .tip-c {
+                font-size: 15px;
+                color: #FFFFFF;
+                text-align: center;
+                font-family: "微软雅黑";
+            }
+
+            .tip p {
+                margin-bottom: 10px;
+                font-size: 16px;
+                font-weight: 200;
+                line-height: 1.5;
+            }
+
+            .tip span {
+                color: #ff4141;
+            }
+
+            button.switch {
+                background-color: rgb(0, 0, 0);
+                border-style: none;
+                color: DodgerBlue;
+            }
+
+            button.switch:hover {
+                color: Tomato;
+            }
+        </style>
+
+        <!-- 右上角模式切换 -->
+        <a href="https://yl1690561739.gitee.io/index/firefox" style="position:fixed;top:5px;right:5px;">
+            <button type="button" class="switch">极简模式 >></button>
+        </a>
+
+        <!-- 整个搜索栏 -->
+        <div>
+            <div class="ui-box-follow">
+                <div class="box-main" style="display:block">
+                    <!-- Super Search -->
+                    <div id="search">
+                        <form action="https://www.baidu.com/s?wd=" method="get" target="_blank" id="super-search-fm">
+                            <input autocomplete="off" type="text" id="search-text" placeholder="百度一下"
+                                style="outline:none" />
+                            <button type="submit" onclick="window.location.reload();"><img src="img/sousuo.png"
+                                    width="25" height="25" /></button>
+                        </form>
+                        <!-- 搜索栏 -->
+                        <div id="search-list" class="hide-type-list">
+                            <!-- 对应两种搜索方式的图标 -->
+                            <div class="s-type">
+                                <span></span>
+                                <div class="s-type-list">
+                                    <label for="type-baidu"><img src="img/wangluo.png" width="22" height="22" />
+                                    </label>
+                                    <label for="type-pexels"><img src="img/tupian.png" width="20" height="20" /></label>
+                                </div>
+                            </div>
+                            <!-- 普通网页搜索 -->
+                            <div class="search-group group-a s-current">
+                                <span class="type-text"><img src="img/wangluo.png" width="22" height="22" /> </span>
+                                <ul class="search-type">
+                                    <!-- 百度搜索模式 -->
+                                    <li>
+                                        <input checked="" hidden="" type="radio" name="type" id="type-baidu"
+                                            value="https://www.baidu.com/s?wd=" data-placeholder="百度一下" />
+                                        <label for="type-baidu">
+                                            <span style="color:DodgerBlue">百度</span>
+                                        </label>
+                                    </li>
+                                    <!-- 必应搜索模式 -->
+                                    <li>
+                                        <input hidden="" type="radio" name="type" id="type-dribbble"
+                                            value="http://cn.bing.com/search?q=" data-placeholder="必应搜索" />
+                                        <label for="type-dribbble">
+                                            <span style="color:Salmon">必应</span>
+                                        </label>
+                                    </li>
+                                    <!-- 百科搜索模式 -->
+                                    <li>
+                                        <input hidden="" type="radio" name="type" id="type-easyicon"
+                                            value="https://baike.baidu.com/search?word=" data-placeholder="搜索百科" />
+                                        <label for="type-easyicon">
+                                            <span style="color:red">百科</span>
+                                        </label>
+                                    </li>
+                                    <!-- 知乎搜索模式 -->
+                                    <li>
+                                        <input hidden="" type="radio" name="type" id="type-huaban"
+                                            value="https://www.zhihu.com/search?type=content&amp;q="
+                                            data-placeholder="搜索知乎" />
+                                        <label for="type-huaban">
+                                            <span style="color:deepskyblue">知乎</span>
+                                        </label>
+                                    </li>
+                                    <!-- 豆瓣搜索模式 -->
+                                    <li>
+                                        <input hidden="" type="radio" name="type" id="type-douban"
+                                            value="https://www.douban.com/search?q=" data-placeholder="搜索豆瓣" />
+                                        <label for="type-douban">
+                                            <span style="color:Lime">豆瓣</span>
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- 切换图片搜索 -->
+                            <div class="search-group group-b">
+                                <span class="type-text"><img src="img/tupian.png" width="20" height="20" /></span>
+                                <ul class="search-type">
+                                    <li><input hidden="" type="radio" name="type" id="type-pexels"
+                                            value="https://www.piqsels.com/zh/search?q="
+                                            data-placeholder="免税图库" /><label for="type-pexels"><span
+                                                style="color:SkyBlue">Piqsels</span></label></li>
+                                    <li><input hidden="" type="radio" name="type" id="type-baidu-images"
+                                            value="http://image.baidu.com/search/index?tn=baiduimage&amp;ps=1&amp;ct=201326592&amp;lm=-1&amp;cl=2&amp;nc=1&amp;ie=utf-8&amp;word="
+                                            data-placeholder="百度图片" /><label for="type-baidu-images"><span
+                                                style="color:DodgerBlue">百度</span></label></li>
+                                    <li><input hidden="" type="radio" name="type" id="type-BING"
+                                            value="http://cn.bing.com/images/search?q=" data-placeholder="必应图片" /><label
+                                            for="type-BING"><span style="color:Salmon">必应</span></label></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- 删除会导致搜索失效 -->
+                        <div style="display:none">
+                            <input type="checkbox" id="set-search-blank">
+                            <label for="set-search-blank" class="green">新窗口打开搜索结果</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 左侧导航栏 -->
+        <div id="nav-plane">
+            <ul>
+                <li><a href="https://yl1690561739.gitee.io/bookmark/" rel="nofollow">首页</a></li>
+                <li><a href="#top" rel="nofollow">TOP</a></li>
+                <li><a href="#one" rel="nofollow">影视</a></li>
+                <li><a href="#two" rel="nofollow">资源</a></li>
+                <li><a href="#three" rel="nofollow">阅读</a></li>
+                <li><a href="#four" rel="nofollow">学习</a></li>
+                <li><a href="#five" rel="nofollow">音乐</a></li>
+                <li><a href="#six" rel="nofollow">工具</a></li>
+                <li><a href="#new" rel="nofollow">素材</a></li>
+            </ul>
+        </div>
+
+        <!-- 书签栏内容 -->
+        <div class="to-box" id="lr">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/shuqian.png" width="21" height="21" />&nbsp;书签</h3>
+                <ul class="clearfix">
+                    <li class="current">Website</li>
+                    <li>Java</li>
+                    <li>Html</li>
+                    <li>Kafka</li>
+                    <li>Storm</li>
+                    <li>Others</li>
+                </ul>
+            </div>
+            <div class="mb">
+                <span class="show">
+                    <a href="https://www.cnblogs.com/xuwujing/" target="_blank">虚无境的博客</a>
+                    <a href="http://blog.haoji.me/" target="_blank">好记的博客</a>
+                    <a href="https://mkblog.cn/" target="_blank">孟坤的博客</a>
+                    <a href="https://www.imtqy.com/" target="_blank">Quanyin说</a>
+                    <a href="http://chuangzaoshi.com/index" target="_blank">创造狮导航</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://www.cnblogs.com/ipetergo/p/6934684.html" target="_blank">Java爬虫实例</a>
+                    <a href="https://www.cnblogs.com/centor/p/6142775.html" target="_blank">Java连接MySQL</a>
+                    <a href="https://www.cnblogs.com/duhuo/p/4276226.html" target="_blank">java连接mysql数据库实例</a>
+                    <a href="https://blog.csdn.net/QQ2899349953/article/details/85143702" target="_blank">Java虚拟机</a>
+                    <a href="https://www.runoob.com/java/java-tutorial.html" target="_blank">Java菜鸟教程</a>
+                    <a href="https://blog.csdn.net/Song_JiangTao/article/details/82252852?tdsourcetag=s_pctim_aiomsg"
+                        target="_blank">SSM三大框架</a>
+                    <a href="https://www.jianshu.com/p/56b29de76625" target="_blank">Springboot Helloworld</a>
+                    <a href="https://www.2cto.com/database/201707/661597.html" target="_blank">Java增删改查</a>
+                    <a href="https://www.cnblogs.com/xuwujing/p/8260935.html" target="_blank">Springboot增删改查</a>
+                    <a href="https://my.oschina.net/luozhou/blog/3088908" target="_blank">Tomcat启动</a>
+                    <a href="https://blog.csdn.net/u012187452/article/details/79120445"
+                        target="_blank">Tomcat启动打不开主页</a>
+                    <a href="https://www.liaoxuefeng.com/" target="_blank">廖雪峰的官方网站</a>
+                    <a href="https://www.cnblogs.com/zhuwenjoyce/p/9663324.html" target="_blank">SpringCloud注解和配置以及pom依赖说明</a>
+                    <a href="https://www.cnblogs.com/qlqwjy/p/10491456.html" target="_blank">Zookeeper环境搭建</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://www.runoob.com/js/js-regexp.html" target="_blank">JS正则表达式</a>
+                    <a href="https://www.runoob.com/html/html-tutorial.html" target="_blank">HTML教程</a>
+                    <a href="https://www.runoob.com/cssref/css-colornames.html" target="_blank">CSS颜色</a>
+                    <a href="https://www.cnblogs.com/zhangchao0515/p/10075875.html" target="_blank">Html对比Jsp</a>
+                    <a href="https://codess.cc/archives/43.html" target="_blank">MKOnlinePlayer</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://www.cnblogs.com/xuwujing/p/8371127.html" target="_blank">Kafka生产和消费demo</a>
+                    <a href="https://blog.csdn.net/u012129558/article/details/80076327" target="_blank">kafka
+                        consumer</a>
+                    <a href="https://www.cnblogs.com/cjsblog/p/9664536.html" target="_blank">Kafka分区</a>
+                    <a href="https://blog.csdn.net/wcc27857285/article/details/81812304"
+                        target="_blank">Eclipse配置Maven</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://www.cnblogs.com/mcomco/p/10304383.html" target="_blank">有向图</a>
+                    <a href="https://www.cnblogs.com/mcomco/p/10298021.html" target="_blank">无向图</a>
+                    <a href="https://www.cnblogs.com/xuwujing/p/8584684.html" target="_blank">storm入门</a>
+                    <a href="https://www.cnblogs.com/xuwujing/p/9021561.html" target="_blank">Storm整合</a>
+                    <a href="https://www.cnblogs.com/imjamin/p/10572420.html" target="_blank">maven settings注释</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://blog.csdn.net/Beyond_F4/article/details/84135949" target="_blank">Python编码报错</a>
+                    <a href="http://www.xz577.com/j/129.html" target="_blank">Python习题答案</a>
+                    <a href="https://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame" target="_blank">Python依赖包</a>
+                    <a href="http://repo.spring.io/release/" target="_blank">Spring依赖包</a>
+                    <a href="http://commons.apache.org/proper/commons-logging/download_logging.cgi"
+                        target="_blank">Commons Logging</a>
+                    <a href="https://jingyan.baidu.com/article/48a42057a94bfca9242504d9.html" target="_blank">批处理文件</a>
+                    <a href="https://blog.csdn.net/xufeng0991/article/details/41309603" target="_blank">批处理打开多个项目</a>
+                    <div style="clear:both"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 影视栏内容 -->
+        <div class="to-box" id="one">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/yingshi.png" width="23" height="23" />&nbsp;影视</h3>
+                <ul class="clearfix">
+                    <li class="current">下载</li>
+                    <li>美剧</li>
+                    <li>动漫</li>
+                </ul>
+            </div>
+            <div class="mb">
+                <span class="show">
+                    <a href="http://f.cili001.com/home.html" target="_blank">磁力站</a>
+                    <a href="http://pianyuan.la/" target="_blank">片源网</a>
+                    <a href="http://www.8vdy.com/" target="_blank">电影网</a>
+                    <a href="https://www.dytt8.net/" target="_blank">电影天堂</a>
+                    <a href="http://btshoufa.cc/forum.php" target="_blank">BT首发</a>
+                    <a href="http://www.7meiju.com/" target="_blank">七汉影视</a>
+                    <a href="http://www.zmz2019.com/" target="_blank">人人影视</a>
+                    <div style="clear:both"></div>
+                </span>
+                <span>
+                    <a href="https://91mjw.com/" target="_blank">91美剧网</a>
+                    <a href="https://www.jjmeiju.com/" target="_blank">99美剧网</a>
+                    <a href="https://www.meijutt.com/" target="_blank">美剧天堂</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a rel="nofollow" href="http://www.ikanfan.com/" target="_blank">爱看番</a>
+                    <a rel="nofollow" href="https://www.bilibili.com/" target="_blank">哔哩哔哩</a>
+                    <a rel="nofollow" href="http://www.dilidili.name/" target="_blank">嘀哩嘀哩</a>
+                    <a rel="nofollow" href="https://www.halihali.vip/" target="_blank">哈哩动漫</a>
+                    <a rel="nofollow" href="http://www.imomoe.io/" target="_blank">樱花动漫</a>
+                    <a rel="nofollow" href="https://www.xinshijiedongman.com/" target="_blank">新世界动漫</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 资源栏内容 -->
+        <div class="to-box" id="two">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/ziyuan.png" width="20" height="20" />&nbsp;资源</h3>
+                <ul class="clearfix">
+                    <li class="current">软件</li>
+                    <li>网盘</li>
+                    <li>源码</li>
+                </ul>
+            </div>
+            <div class="mb">
+                <span class="show">
+                    <a href="http://xiazai.zol.com.cn/" target="_blank">ZOL下载</a>
+                    <a href="https://www.52pojie.cn/" target="_blank">吾爱破解</a>
+                    <a href="https://www.landiannews.com/" target="_blank">蓝点网</a>
+                    <a href="https://www.iplaysoft.com/" target="_blank">异次元软件</a>
+                    <a href="http://www.rsdown.cn/" target="_blank">红软基地</a>
+                    <a href="https://www.appcgn.com/" target="_blank">软件缘</a>
+                    <a href="http://www.xue51.com/" target="_blank">软件学堂</a>
+                    <a href="https://www.wisecleaner.com.cn/index.html" target="_blank">智慧清理</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="http://www.rufengso.net/" target="_blank">盘多多</a>
+                    <a href="http://www.bdyso.com/" target="_blank">百度云搜</a>
+                    <a href="https://www.58wangpan.com/" target="_blank">58网盘</a>
+                    <a href="http://www.lanzou.com/account.php?action=register" target="_blank">蓝奏云</a>
+                    <a href="https://www.jianguoyun.com/d/home#/" target="_blank">坚果云</a>
+                    <a href="https://yun.baidu.com/disk/home?#/all?path=%2F&vmode=list" target="_blank">百度网盘</a>
+                    <a href="https://www.baiduwp.com/" target="_blank">Pandownload</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="https://www.heyunzy.com/" target="_blank">鹤云博客</a>
+                    <a href="http://www.yuanmaquan.cn/" target="_blank">源码圈</a>
+                    <a href="http://www.mycodes.net/" target="_blank">源码之家</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 阅读栏内容 -->
+        <div class="to-box" id="three">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/yuedu.png" width="23" height="23" />&nbsp;阅读</h3>
+                <ul class="clearfix">
+                    <li class="current">轻阅读</li>
+                    <li>电子书</li>
+                    <li>书库</li>
+                </ul>
+            </div>
+            <div class="mb">
+                <span class="show">
+                    <a href="http://www.todayonhistory.com/" target="_blank">历史上的今天</a>
+                    <a href="http://www.qulishi.com/" target="_blank">趣历史</a>
+                    <a href="https://www.duanwenxue.com/" target="_blank">短文学</a>
+                    <a href="https://mrmy.12345j.com/" target="_blank">名人名言</a>
+                    <a href="http://www.chinawriter.com.cn/" target="_blank">作家网</a>
+                    <a href="https://www.gushiwen.org/" target="_blank">古诗文</a>
+                    <a href="https://meiriyiwen.com/random" target="_blank">每日一文</a>
+                    <a href="https://www.tuicool.com/" target="_blank">推酷网</a>
+                    <a href="https://eyulu.me/" target="_blank">微语录</a>
+                    <a href="https://www.5aigushi.com/" target="_blank">故事会</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="https://www.jiumodiary.com/" target="_blank">鸠摩搜索</a>
+                    <a href="http://www.ireadweek.com/" target="_blank">周读</a>
+                    <a href="http://www.xkreading.com/" target="_blank">醒客读书</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="https://www.shuge.org/" target="_blank">书格</a>
+                    <a href="http://haodoo.net/" target="_blank">好读</a>
+                    <a href="http://www.book118.com/" target="_blank">E书联盟</a>
+                    <a href="http://3g.sbkk8.com/" target="_blank">天涯书库</a>
+                    <a href="http://www.esk365.com/" target="_blank">e时空资源</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 学习栏内容 -->
+        <div class="to-box" id="four">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/xuexi.png" width="27" height="27" />&nbsp;学习</h3>
+                <ul class="clearfix">
+                    <li class="current">在线</li>
+                    <li>下载</li>
+                </ul>
+            </div>
+
+            <div class="mb">
+                <span class="show">
+                    <a href="http://www.hocoding.com/" target="_blank">完美代码</a>
+                    <a href="https://www.oschina.net/" target="_blank">开源中国</a>
+                    <a href="https://www.runoob.com/" target="_blank">菜鸟教程</a>
+                    <a href="https://wangchujiang.com/linux-command/" target="_blank">Linux命令</a>
+                    <a href="https://www.w3school.com.cn/index.html" target="_blank">W3school</a>
+                    <a href="https://www.w3cschool.cn/" target="_blank">w3cschool</a>
+                    <a href="https://gitee.com/yl1690561739" target="_blank">Gitee</a>
+                    <a href="https://github.com/yao1690561739?tab=repositories" target="_blank">Github</a>
+                </span>
+                <span>
+                    <a href="http://www.xz577.com/" target="_blank">码农之家</a>
+                    <a href="http://www.hejizhan.com/html/search" target="_blank">万千合集</a>
+                    <a href="https://opsx.alibaba.com/mirror" target="_blank">阿里镜像</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 音乐栏内容 -->
+        <div class="to-box" id="five">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/yinyue.png" width="19" height="19" />&nbsp;音乐</h3>
+                <ul class="clearfix">
+                    <li class="current">在线</li>
+                    <li>下载</li>
+                </ul>
+            </div>
+
+            <div class="mb">
+                <span class="show">
+                    <a href="https://music.163.com/" target="_blank">网易云音乐</a>
+                    <a href="http://www.kuwo.cn/" target="_blank">酷我音乐</a>
+                    <a href="https://www.kugou.com/" target="_blank">酷狗音乐</a>
+                    <a href="https://www.xiami.com/" target="_blank">虾米音乐</a>
+                    <a href="http://www.5nd.com/" target="_blank">5nd音乐</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="https://www.sq688.com/" target="_blank">无损下载</a>
+                    <a href="http://www.51ape.com/" target="_blank">51Ape</a>
+                    <a href="http://www.baiduonce.com/index.html" target="_blank">摆渡一下</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 工具栏内容 -->
+        <div class="to-box" id="six">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/gongju.png" width="22" height="22" />&nbsp;工具</h3>
+                <ul class="clearfix">
+                    <li class="current">开发</li>
+                    <li>综合</li>
+                </ul>
+            </div>
+
+            <div class="mb">
+                <span class="show">
+                    <a href="https://www.mdeditor.com/" target="_blank">MD编辑器</a>
+                    <a href="http://tool.mkblog.cn/" target="_blank">孟坤工具箱</a>
+                    <a href="https://www.sojson.com/" target="_blank">JSON在线</a>
+                    <a href="https://c.runoob.com/front-end/61" target="_blank">HTML在线</a>
+                    <a href="https://www.html.cn/tool/js_beautify/" target="_blank">JS美化</a>
+                    <a href="https://unicode-table.com/cn/" target="_blank">字符百科</a>
+                    <a href="https://www.processon.com/" target="_blank">在线作图</a>
+                    <a href="http://tools.jb51.net/" target="_blank">脚本之家</a>
+                    <div class="clear"></div>
+                </span>
+
+                <span>
+                    <a href="https://www.toolnb.com/" target="_blank">爱资料工具</a>
+                    <a href="https://tool.lusongsong.com/" target="_blank">松松工具</a>
+                    <a href="https://tool2.cn/" target="_blank">兔二工具</a>
+                    <a href="http://www.gjw123.com/" target="_blank">工具网123</a>
+                    <a href="http://www.virscan.org/language/zh-cn/" target="_blank">VirSCAN查毒</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 素材栏内容 -->
+        <div class="to-box" id="new">
+            <div class="scroller"
+                style="width:780px;transition-timing-function: cubic-bezier(0.1, 0.57, 0.1, 1); transition-duration: 0ms; transform: translate(-0.078px, 0px) translateZ(0px);">
+                <h3><img src="img/sucai.png" width="18" height="18" />&nbsp;素材</h3>
+                <ul class="clearfix">
+                    <li class="current">图片</li>
+                    <li>创意</li>
+                    <li>前端</li>
+                </ul>
+            </div>
+
+            <div class="mb">
+                <span class="show">
+                    <a href="https://www.piqsels.com/zh" target="_blank">piqsels图库</a>
+                    <a href="http://pic.5tu.cn/" target="_blank">百图汇</a>
+                    <a href="https://www.ivsky.com/" target="_blank">天堂图片</a>
+                    <a href="https://www.iconfont.cn/home/index" target="_blank">矢量图标</a>
+                    <a href="https://www.easyicon.net/" target="_blank">easyicon</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="http://www.gifcc.com/forum.php" target="_blank">GIF出处</a>
+                    <a href="http://www.fsdpp.cn/" target="_blank">创意网</a>
+                    <a href="https://www.topys.cn/" target="_blank">TOPYS</a>
+                    <a href="http://www.sj33.cn/" target="_blank">设计之家</a>
+                    <div class="clear"></div>
+                </span>
+                <span>
+                    <a href="https://www.17sucai.com/" target="_blank">17素材</a>
+                    <a href="http://www.dowebok.com/" target="_blank">dowebok</a>
+                    <div class="clear"></div>
+                </span>
+            </div>
+        </div>
+
+        <!-- 友链栏内容 -->
+        <div class="cabinet">
+            <div class="urls">友情<br>链接</div>
+            <div class="po-lj">
+                <a href="https://yl1690561739.gitee.io" target="_blank">buzhibujue's blog</a>
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <!-- 下标栏内容 -->
+    <div id="footer">
+        <a href="https://butalways1121.gitee.io/bookmark/">首页</a>
+        &nbsp;-&nbsp;
+        <a href="https://butalways1121.gitee.io/">博客</a>
+    </div>
+    <br>
+
+    <!-- 一言 -->
+    <div>
+        <p id="hitokoto" style="color:deepskyblue;font-size:15px;text-align: center;"><b></b></p>
+        <script>
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    yiyan = JSON.parse(this.responseText);
+                    document.getElementById("hitokoto").innerHTML = yiyan.hitokoto;
+                }
+            };
+            xmlhttp.open("GET", "https://v1.hitokoto.cn/?c=a&c=d&c=c", true);
+            xmlhttp.send();
+        </script>
+    </div>
+
+</body>
+</html>
+
+<script src="js/background.js"></script>
+<script src="https://gitee.com/yl1690561739/relaxation/raw/master/main.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/flexible.js"></script>
+<script src="js/iscroll.js"></script>
+<script src="js/navbarscroll.js"></script>
+<script src="js/main.js"></script>
+<script>
+    $('li[data-active="fid-0"]').addClass('active');
+</script>
+<script src="js/search.js"></script>
